@@ -67,7 +67,7 @@ export const LoginPage = () => {
             <ul className="space-y-4">
               {FEATURES.map((f, i) => (
                 <li key={i} className="flex items-center gap-3.5 text-slate-200 text-sm">
-                  <span className="w-8 h-8 rounded-lg bg-white/8 flex items-center justify-center text-base flex-shrink-0"
+                  <span className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
                     style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                     {f.icon}
                   </span>

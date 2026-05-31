@@ -81,7 +81,7 @@
            hover:bg-slate-100 hover:text-slate-900 transition-all duration-150 cursor-pointer;
   }
   .nav-item-active {
-    @apply nav-item bg-navy-700/8 text-navy-700 font-semibold;
+    @apply nav-item font-semibold;
     background-color: rgba(23, 43, 77, 0.08);
     color: #172B4D;
   }

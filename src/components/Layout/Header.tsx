@@ -30,7 +30,7 @@ export const Header = () => {
           ].map(({ icon: Icon, label, path }) => (
             <Link key={path} to={path} onClick={() => setOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-                ${pathname === path ? 'bg-navy-700/8 text-navy-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                ${pathname === path ? 'text-navy-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}`}
               style={pathname === path ? { backgroundColor: 'rgba(23,43,77,0.08)', color: '#172B4D' } : undefined}>
               <Icon size={16} />
               {label}
