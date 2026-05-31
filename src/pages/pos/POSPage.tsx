@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
 import { Producto } from '../../types';
-import { Search, Plus, Minus, ShoppingCart, DollarSign, Trash2, CheckCircle2, ChevronLeft } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, DollarSign, Trash2, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { AppLayout } from '../../components/Layout/AppLayout';
