@@ -15,7 +15,7 @@ const NAV = [
   { icon: TrendingUp,      label: 'Flujo de Caja',  path: '/flujo-caja' },
   { icon: Target,          label: 'Metas',          path: '/metas' },
   { icon: LineChart,       label: 'Análisis',       path: '/analisis' },
-  { icon: BarChart3,       label: 'Reportes',       path: '/reportes', soon: true },
+  { icon: BarChart3,       label: 'Reportes',       path: '/reportes' },
 ];
 
 const BOTTOM_NAV = [
