@@ -14,7 +14,7 @@ const MODULES = [
   },
   {
     icon: Package, label: 'Inventario', desc: 'Gestión de productos', path: '/inventario',
-    color: 'bg-emerald-600', available: false,
+    color: 'bg-emerald-600', available: true,
   },
   {
     icon: TrendingUp, label: 'Financiero', desc: 'Ingresos y gastos', path: '/financiero',

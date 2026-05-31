@@ -6,6 +6,8 @@ import {
   DashboardPage,
 } from './pages';
 import { POSPage } from './pages/pos/POSPage';
+import { InventarioPage } from './pages/inventario/InventarioPage';
+import { ProductoDetailPage } from './pages/inventario/ProductoDetailPage';
 
 function App() {
   const { isAuthenticated, accessToken } = useAuthStore();
@@ -30,6 +32,8 @@ function App() {
         <Route path="/enable-2fa"  element={<ProtectedRoute element={<Enable2FAPage />} />} />
         <Route path="/dashboard"   element={<ProtectedRoute element={<DashboardPage />} />} />
         <Route path="/pos"         element={<ProtectedRoute element={<POSPage />} />} />
+        <Route path="/inventario"  element={<ProtectedRoute element={<InventarioPage />} />} />
+        <Route path="/inventario/:id" element={<ProtectedRoute element={<ProductoDetailPage />} />} />
 
         {/* Redirects */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
