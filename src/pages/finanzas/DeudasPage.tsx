@@ -42,12 +42,22 @@ export const DeudasPage = () => {
   const cargar = useCallback(async () => {
     setLoading(true);
     try {
-      const [dRes, aRes] = await Promise.all([
-        api.get('/deudas'),
-        api.get('/deudas/analisis/resumen'),
-      ]);
-      setDeudas(dRes.data.deudas || []);
-      setAnalisis(aRes.data.analisis);
+      const dRes = await api.get('/deudas');
+      const listaDeudas: Deuda[] = dRes.data.deudas || [];
+      setDeudas(listaDeudas);
+
+      // Calcular analisis client-side (no existe /deudas/analisis en backend)
+      const activas = listaDeudas.filter(d => d.estado === 'ACTIVA');
+      const total_deudas = activas.reduce((s, d) => s + Number(d.monto_usd), 0);
+      const interes_mensual_estimado = activas.reduce(
+        (s, d) => s + (Number(d.monto_usd) * Number(d.interes_anual)) / 12 / 100,
+        0
+      );
+      setAnalisis({
+        total_deudas,
+        interes_mensual_estimado,
+        ratio_deuda_ingresos: 0, // No tenemos ingresos disponibles aquí
+      });
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, []);

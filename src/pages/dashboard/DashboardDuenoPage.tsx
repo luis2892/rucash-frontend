@@ -32,14 +32,30 @@ export const DashboardDuenoPage = () => {
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const [widgetsRes, resumenRes, usoRes] = await Promise.all([
+      const [widgetsRes, resumenRes, susRes] = await Promise.all([
         api.get('/dashboard/widgets'),
         api.get('/dashboard/resumen'),
-        api.get('/dashboard/suscripcion/uso'),
+        api.get('/suscripciones').catch(() => ({ data: { suscripcion: null } })),
       ]);
       setWidgets(widgetsRes.data.widgets || []);
       setResumen(resumenRes.data.resumen);
-      setUso(usoRes.data.uso);
+
+      // Construir "uso" a partir de la suscripción
+      const sus = susRes.data.suscripcion;
+      if (sus) {
+        const vencimiento = new Date(sus.fecha_vencimiento);
+        const diasRestantes = Math.ceil((vencimiento.getTime() - Date.now()) / 86400000);
+        setUso({
+          plan: sus.plan || 'BÁSICO',
+          vencimiento: sus.fecha_vencimiento,
+          dias_restantes: diasRestantes,
+          usuarios_usados: resumenRes.data.resumen?.equipo_total || 0,
+          usuarios_limite: sus.limite_usuarios || 5,
+          porcentaje_uso: sus.limite_usuarios
+            ? Math.round(((resumenRes.data.resumen?.equipo_total || 0) / sus.limite_usuarios) * 100)
+            : 0,
+        });
+      }
     } catch (error) {
       console.error('Error cargando dashboard:', error);
     } finally {

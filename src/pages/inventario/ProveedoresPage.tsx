@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { ResponsiveModal } from '../../components/ui/ResponsiveModal';
 import { ResponsiveTable } from '../../components/ui/ResponsiveTable';
+import { AppLayout } from '../../components/Layout/AppLayout';
 import { api } from '../../services/api';
 
 interface Proveedor {
@@ -70,11 +71,15 @@ export const ProveedoresPage = () => {
   };
 
   if (isLoading) {
-    return <div className="p-6">Cargando...</div>;
+    return (
+      <AppLayout>
+        <div className="text-center py-16 text-slate-400 text-sm">Cargando proveedores...</div>
+      </AppLayout>
+    );
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <AppLayout>
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Proveedores</h1>
@@ -163,6 +168,6 @@ export const ProveedoresPage = () => {
           </div>
         </form>
       </ResponsiveModal>
-    </div>
+    </AppLayout>
   );
 };

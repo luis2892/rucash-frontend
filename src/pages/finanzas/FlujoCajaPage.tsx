@@ -3,19 +3,48 @@ import { api } from '../../services/api';
 import { AppLayout } from '../../components/Layout/AppLayout';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, CreditCard, Banknote } from 'lucide-react';
 
+// Genera proyección de 6 meses a partir del análisis actual
+function buildProyeccion(analisis: any): any[] {
+  if (!analisis) return [];
+  const ingresosMes = analisis.ingresos_mes || 0;
+  const egresosMes = analisis.interes_mensual || 0;
+  const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const hoy = new Date();
+  return Array.from({ length: 6 }, (_, i) => {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+    const factor = 1 + (i * 0.02); // Crecimiento estimado del 2% mensual
+    const ingresos = Math.round(ingresosMes * factor);
+    const egresos = Math.round(egresosMes);
+    return {
+      mes: meses[fecha.getMonth()],
+      ingresos,
+      egresos,
+      saldo: ingresos - egresos,
+    };
+  });
+}
+
 export const FlujoCajaPage = () => {
   const [proyeccion, setProyeccion] = useState<any[]>([]);
   const [reporte, setReporte] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/flujo-caja/proyeccion'),
-      api.get('/flujo-caja/reporte'),
-    ])
-      .then(([pRes, rRes]) => {
-        setProyeccion(pRes.data.proyeccion || []);
-        setReporte(rRes.data.reporte);
+    api.get('/flujo-caja/analisis')
+      .then(res => {
+        const analisis = res.data.analisis;
+        // Mapear analisis al formato de reporte esperado
+        setReporte({
+          periodo: analisis?.periodo,
+          ingresos_mes: analisis?.ingresos_mes || 0,
+          total_deudas: analisis?.total_deudas || 0,
+          interes_mensual: analisis?.interes_mensual || 0,
+          saldo_neto: analisis?.saldo_neto || 0,
+          ventas_count: analisis?.ventas_count || 0,
+          por_metodo_pago: analisis?.por_metodo_pago || {},
+          deudas: analisis?.deudas || [],
+        });
+        setProyeccion(buildProyeccion(analisis));
       })
       .catch(console.error)
       .finally(() => setLoading(false));

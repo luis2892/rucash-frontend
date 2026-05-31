@@ -29,19 +29,56 @@ const CustomTooltipVentas = ({ active, payload, label }: any) => {
   );
 };
 
+// Construye analisis diario y resumen a partir de la lista de metas
+function buildAnalisisFromMetas(metas: any[]): { analisis: DiaAnalisis[]; resumen: any } {
+  // Agrupar por fecha de inicio como proxy de "periodo"
+  const byDate: Record<string, any> = {};
+  for (const m of metas) {
+    const periodo = m.fecha_inicio?.split('T')[0] || m.fecha_inicio || '';
+    if (!byDate[periodo]) {
+      byDate[periodo] = { periodo, total_ventas: 0, numero_transacciones: 0, ticket_promedio: 0, tasa_cumplimiento: 0, promedio_venta: 0 };
+    }
+    byDate[periodo].total_ventas += Number(m.valor_actual || 0);
+    byDate[periodo].numero_transacciones += 1;
+    byDate[periodo].tasa_cumplimiento = m.porcentaje_cumplimiento || 0;
+  }
+  const analisis: DiaAnalisis[] = Object.values(byDate).map((d: any) => ({
+    ...d,
+    ticket_promedio: d.numero_transacciones > 0 ? d.total_ventas / d.numero_transacciones : 0,
+    promedio_venta: d.numero_transacciones > 0 ? d.total_ventas / d.numero_transacciones : 0,
+  }));
+
+  const completadas = metas.filter(m => m.estado === 'COMPLETADA' || (m.porcentaje_cumplimiento || 0) >= 100).length;
+  const cumplimientoTotal = metas.length > 0
+    ? metas.reduce((s, m) => s + (m.porcentaje_cumplimiento || 0), 0) / metas.length
+    : 0;
+
+  const resumen = {
+    total_metas: metas.length,
+    metas_completadas: completadas,
+    porcentaje_cumplimiento_general: cumplimientoTotal,
+    metas_por_tipo: {
+      diarias: metas.filter(m => m.tipo === 'DIARIA').length,
+      semanales: metas.filter(m => m.tipo === 'SEMANAL').length,
+      mensuales: metas.filter(m => m.tipo === 'MENSUAL').length,
+      anuales: metas.filter(m => m.tipo === 'ANUAL').length,
+    },
+  };
+  return { analisis, resumen };
+}
+
 export const AnalisisPage = () => {
   const [analisis, setAnalisis] = useState<DiaAnalisis[]>([]);
   const [resumen, setResumen] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/metas/analisis/detalle'),
-      api.get('/metas/analisis/resumen'),
-    ])
-      .then(([aRes, rRes]) => {
-        setAnalisis(aRes.data.analisis || []);
-        setResumen(rRes.data.resumen);
+    api.get('/metas')
+      .then(res => {
+        const metas = res.data.metas || [];
+        const { analisis: a, resumen: r } = buildAnalisisFromMetas(metas);
+        setAnalisis(a);
+        setResumen(r);
       })
       .catch(console.error)
       .finally(() => setLoading(false));

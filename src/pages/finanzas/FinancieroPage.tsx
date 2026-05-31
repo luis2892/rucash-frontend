@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingDown, TrendingUp, DollarSign, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
+import { AppLayout } from '../../components/Layout/AppLayout';
 import { api } from '../../services/api';
 
 interface FinancieroData {
@@ -49,7 +50,11 @@ export const FinancieroPage = () => {
   }, []);
 
   if (isLoading) {
-    return <div className="p-6">Cargando...</div>;
+    return (
+      <AppLayout>
+        <div className="text-center py-16 text-slate-400 text-sm">Cargando datos financieros...</div>
+      </AppLayout>
+    );
   }
 
   const deudasPróximas = deudas.filter(d => {
@@ -58,7 +63,7 @@ export const FinancieroPage = () => {
   });
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <AppLayout>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
           <DollarSign size={32} className="text-teal-500" />
@@ -164,6 +169,6 @@ export const FinancieroPage = () => {
           </Card>
         </Link>
       </div>
-    </div>
+    </AppLayout>
   );
 };

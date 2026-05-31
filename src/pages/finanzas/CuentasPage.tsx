@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { ResponsiveModal } from '../../components/ui/ResponsiveModal';
 import { ResponsiveTable } from '../../components/ui/ResponsiveTable';
+import { AppLayout } from '../../components/Layout/AppLayout';
 import { api } from '../../services/api';
 
 interface Cuenta {
@@ -71,7 +72,11 @@ export const CuentasPage = () => {
   };
 
   if (isLoading) {
-    return <div className="p-6">Cargando...</div>;
+    return (
+      <AppLayout>
+        <div className="text-center py-16 text-slate-400 text-sm">Cargando cuentas...</div>
+      </AppLayout>
+    );
   }
 
   const totalBalance = cuentas
@@ -79,7 +84,7 @@ export const CuentasPage = () => {
     .reduce((sum, c) => sum + c.saldo, 0);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <AppLayout>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
           <DollarSign size={32} className="text-teal-500" />
@@ -195,6 +200,6 @@ export const CuentasPage = () => {
           </div>
         </form>
       </ResponsiveModal>
-    </div>
+    </AppLayout>
   );
 };

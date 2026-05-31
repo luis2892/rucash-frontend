@@ -58,12 +58,31 @@ export const MetasPage = () => {
   const cargar = useCallback(async () => {
     setLoading(true);
     try {
-      const [mRes, rRes] = await Promise.all([
+      // Cargar todas las metas para calcular resumen (no existe /metas/analisis/resumen en backend)
+      const [mRes, todasRes] = await Promise.all([
         api.get('/metas', { params: { tipo: filtroTipo || undefined } }),
-        api.get('/metas/analisis/resumen'),
+        api.get('/metas'),
       ]);
-      setMetas(mRes.data.metas || []);
-      setResumen(rRes.data.resumen);
+      const listaMetas: Meta[] = mRes.data.metas || [];
+      const todasMetas: Meta[] = todasRes.data.metas || [];
+      setMetas(listaMetas);
+
+      // Calcular resumen client-side
+      const completadas = todasMetas.filter(m => m.estado === 'COMPLETADA' || m.porcentaje_cumplimiento >= 100).length;
+      const cumplimiento = todasMetas.length > 0
+        ? todasMetas.reduce((s, m) => s + (m.porcentaje_cumplimiento || 0), 0) / todasMetas.length
+        : 0;
+      setResumen({
+        total_metas: todasMetas.length,
+        metas_completadas: completadas,
+        porcentaje_cumplimiento_general: cumplimiento,
+        metas_por_tipo: {
+          diarias: todasMetas.filter(m => m.tipo === 'DIARIA').length,
+          semanales: todasMetas.filter(m => m.tipo === 'SEMANAL').length,
+          mensuales: todasMetas.filter(m => m.tipo === 'MENSUAL').length,
+          anuales: todasMetas.filter(m => m.tipo === 'ANUAL').length,
+        },
+      });
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, [filtroTipo]);
