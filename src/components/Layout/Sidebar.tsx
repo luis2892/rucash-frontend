@@ -4,18 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingCart, Package, TrendingDown,
   TrendingUp, Target, BarChart3, LineChart, Shield, LogOut, ChevronRight,
+  Crown, Users,
 } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 
 const NAV = [
-  { icon: LayoutDashboard, label: 'Dashboard',      path: '/dashboard' },
-  { icon: ShoppingCart,    label: 'Punto de Venta', path: '/pos' },
-  { icon: Package,         label: 'Inventario',     path: '/inventario' },
-  { icon: TrendingDown,    label: 'Deudas',         path: '/deudas' },
-  { icon: TrendingUp,      label: 'Flujo de Caja',  path: '/flujo-caja' },
-  { icon: Target,          label: 'Metas',          path: '/metas' },
-  { icon: LineChart,       label: 'Análisis',       path: '/analisis' },
-  { icon: BarChart3,       label: 'Reportes',       path: '/reportes' },
+  { icon: LayoutDashboard, label: 'Dashboard',        path: '/dashboard' },
+  { icon: ShoppingCart,    label: 'Punto de Venta',   path: '/pos' },
+  { icon: Package,         label: 'Inventario',       path: '/inventario' },
+  { icon: TrendingDown,    label: 'Deudas',           path: '/deudas' },
+  { icon: TrendingUp,      label: 'Flujo de Caja',    path: '/flujo-caja' },
+  { icon: Target,          label: 'Metas',            path: '/metas' },
+  { icon: LineChart,       label: 'Análisis',         path: '/analisis' },
+  { icon: BarChart3,       label: 'Reportes',         path: '/reportes' },
+  { icon: Crown,           label: 'Dashboard Dueño',  path: '/dashboard-dueno' },
+  { icon: Users,           label: 'Mi Equipo',        path: '/equipo' },
 ];
 
 const BOTTOM_NAV = [
@@ -51,22 +54,17 @@ export const Sidebar = () => {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV.map(({ icon: Icon, label, path, soon }) => {
+        {NAV.map(({ icon: Icon, label, path }) => {
           const active = pathname === path;
           return (
             <Link
               key={path}
-              to={soon ? '#' : path}
+              to={path}
               className={`${active ? 'nav-item-active' : 'nav-item'} group relative`}
-              onClick={soon ? (e) => e.preventDefault() : undefined}
             >
               <Icon size={17} className="flex-shrink-0" />
               <span className="flex-1 text-sm">{label}</span>
-              {soon ? (
-                <span className="text-2xs font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-400">Pronto</span>
-              ) : active ? (
-                <ChevronRight size={14} className="opacity-40" />
-              ) : null}
+              {active && <ChevronRight size={14} className="opacity-40" />}
             </Link>
           );
         })}
