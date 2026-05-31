@@ -1,48 +1,45 @@
 import React from 'react';
-import { Loader } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'teal' | 'secondary' | 'ghost' | 'danger' | 'outline';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   isLoading?: boolean;
   icon?: React.ReactNode;
+  iconRight?: React.ReactNode;
   fullWidth?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', isLoading = false, icon, fullWidth = false, disabled, children, className = '', ...props }, ref) => {
-    const variantClasses = {
+  ({ variant = 'primary', size = 'md', isLoading = false, icon, iconRight, fullWidth = false, disabled, children, className = '', ...props }, ref) => {
+    const variantClass = {
       primary:   'btn-primary',
+      teal:      'btn-teal',
       secondary: 'btn-secondary',
-      danger:    'btn-danger',
       ghost:     'btn-ghost',
-    };
+      danger:    'btn-danger',
+      outline:   'btn-outline',
+    }[variant];
 
-    const sizeClasses = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-6 py-2.5 text-base',
-      lg: 'px-8 py-3 text-lg',
-    };
+    const sizeClass = {
+      sm: 'btn-sm',
+      md: 'btn-md',
+      lg: 'btn-lg',
+      xl: 'btn-xl',
+    }[size];
 
     return (
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={`
-          ${variantClasses[variant]}
-          ${sizeClasses[size]}
-          ${fullWidth ? 'w-full' : ''}
-          ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-          ${className}
-          inline-flex items-center justify-center gap-2
-        `}
+        className={`${variantClass} ${sizeClass} ${fullWidth ? 'w-full' : ''} ${className}`}
         {...props}
       >
-        {isLoading ? <Loader size={20} className="animate-spin" /> : icon}
+        {isLoading ? <Loader2 size={16} className="animate-spin" /> : icon}
         {children}
+        {!isLoading && iconRight}
       </button>
     );
   }
 );
-
 Button.displayName = 'Button';

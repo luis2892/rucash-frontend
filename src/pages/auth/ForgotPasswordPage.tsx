@@ -2,102 +2,69 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { api } from '../../services/api';
-import { Mail, AlertCircle, Loader, CheckCircle } from 'lucide-react';
+import { Mail, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Logo } from '../../components/ui/Logo';
 
-interface ForgotPasswordForm { email: string; }
+interface Form { email: string; }
 
 export const ForgotPasswordPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<ForgotPasswordForm>({
-    defaultValues: { email: '' },
-  });
+  const { register, handleSubmit, formState: { errors } } = useForm<Form>({ defaultValues: { email: '' } });
 
-  const onSubmit = async (data: ForgotPasswordForm) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await api.post('/auth/forgot-password', data);
-      setSuccess(true);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error enviando email');
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit = async (data: Form) => {
+    setIsLoading(true); setError(null);
+    try { await api.post('/auth/forgot-password', data); setSuccess(true); }
+    catch (e: any) { setError(e.response?.data?.message || 'Error enviando email'); }
+    finally { setIsLoading(false); }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <CheckCircle className="mx-auto mb-4 text-green-600" size={48} />
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Email Enviado</h2>
-            <p className="text-gray-600 mb-6">
-              Revisa tu email para el enlace de reset. El enlace expira en 1 hora.
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center px-4">
+      <div className="w-full max-w-sm mx-auto animate-slide-up">
+        <div className="mb-8 flex justify-center"><Logo size="md" /></div>
+
+        {success ? (
+          <div className="card-p text-center">
+            <CheckCircle2 className="mx-auto mb-4 text-teal-500" size={48} />
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Revisa tu email</h2>
+            <p className="text-slate-500 text-sm mb-6">
+              Si el email existe en nuestro sistema, recibirás un enlace de recuperación. Expira en 1 hora.
             </p>
-            <Link to="/login" className="text-indigo-600 hover:underline font-semibold">
+            <Link to="/login" className="text-teal-600 hover:text-teal-700 text-sm font-semibold transition-colors">
               Volver al login
             </Link>
           </div>
-        </div>
-      </div>
-    );
-  }
+        ) : (
+          <div className="card-p">
+            <Link to="/login" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 mb-6 transition-colors">
+              <ArrowLeft size={14} /> Volver al login
+            </Link>
+            <h2 className="text-xl font-bold text-slate-900 mb-1">Recuperar contraseña</h2>
+            <p className="text-slate-500 text-sm mb-6">Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.</p>
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-indigo-600 mb-2">💰 RUCASH</h1>
-          <p className="text-gray-600">Tu RUC, Tu Negocio</p>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            Recuperar Contraseña
-          </h2>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-              <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-              <p className="text-red-700 text-sm">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
-                <input
-                  {...register('email', {
-                    required: 'El email es requerido',
-                    pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Email inválido' },
-                  })}
-                  type="email"
-                  placeholder="tu@email.com"
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-                />
+            {error && (
+              <div className="alert-error mb-5">
+                <AlertCircle size={16} className="flex-shrink-0" />
+                <span>{error}</span>
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
-            </div>
+            )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
-            >
-              {isLoading ? <><Loader size={20} className="animate-spin" /> Enviando...</> : 'Enviar Email de Reset'}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-gray-600">
-            <Link to="/login" className="text-indigo-600 hover:underline">Volver al login</Link>
-          </p>
-        </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+              <Input label="Email" type="email" placeholder="tu@empresa.com" icon={<Mail size={16} />}
+                error={errors.email?.message}
+                {...register('email', { required: 'El email es requerido', pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Email inválido' } })}
+              />
+              <Button type="submit" variant="primary" size="lg" fullWidth isLoading={isLoading}>
+                {isLoading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+              </Button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
