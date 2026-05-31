@@ -17,16 +17,16 @@ const MODULES = [
     color: 'bg-emerald-600', available: true,
   },
   {
-    icon: TrendingUp, label: 'Financiero', desc: 'Ingresos y gastos', path: '/financiero',
-    color: 'bg-amber-500', available: false,
+    icon: TrendingUp, label: 'Deudas', desc: 'Gestión de deudas', path: '/deudas',
+    color: 'bg-amber-500', available: true,
+  },
+  {
+    icon: BarChart3, label: 'Flujo de Caja', desc: 'Análisis financiero', path: '/flujo-caja',
+    color: 'bg-sky-600', available: true,
   },
   {
     icon: Target, label: 'Metas', desc: 'Control de objetivos', path: '/metas',
     color: 'bg-purple-600', available: false,
-  },
-  {
-    icon: BarChart3, label: 'Reportes', desc: 'Análisis de datos', path: '/reportes',
-    color: 'bg-sky-600', available: false,
   },
 ];
 

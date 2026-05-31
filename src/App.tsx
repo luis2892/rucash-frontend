@@ -8,6 +8,8 @@ import {
 import { POSPage } from './pages/pos/POSPage';
 import { InventarioPage } from './pages/inventario/InventarioPage';
 import { ProductoDetailPage } from './pages/inventario/ProductoDetailPage';
+import { DeudasPage } from './pages/finanzas/DeudasPage';
+import { FlujoCajaPage } from './pages/finanzas/FlujoCajaPage';
 
 function App() {
   const { isAuthenticated, accessToken } = useAuthStore();
@@ -34,6 +36,8 @@ function App() {
         <Route path="/pos"         element={<ProtectedRoute element={<POSPage />} />} />
         <Route path="/inventario"  element={<ProtectedRoute element={<InventarioPage />} />} />
         <Route path="/inventario/:id" element={<ProtectedRoute element={<ProductoDetailPage />} />} />
+        <Route path="/deudas"      element={<ProtectedRoute element={<DeudasPage />} />} />
+        <Route path="/flujo-caja"  element={<ProtectedRoute element={<FlujoCajaPage />} />} />
 
         {/* Redirects */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

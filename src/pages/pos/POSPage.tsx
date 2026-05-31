@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../services/api';
 import { Producto } from '../../types';
-import { Search, Plus, Minus, ShoppingCart, DollarSign, Trash2, CheckCircle2, X } from 'lucide-react';
+import { Search, Plus, Minus, ShoppingCart, DollarSign, Trash2, CheckCircle2, ChevronLeft } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { AppLayout } from '../../components/Layout/AppLayout';
@@ -30,6 +30,7 @@ export const POSPage = () => {
   const [loading, setLoading] = useState(false);
   const [loadingProd, setLoadingProd] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [mobileView, setMobileView] = useState<'productos' | 'carrito'>('productos');
 
   const fetchProductos = useCallback(async () => {
     setLoadingProd(true);
@@ -60,6 +61,7 @@ export const POSPage = () => {
         : i);
       return [...prev, { producto_id: p.id, nombre: p.nombre, cantidad: 1, precio_unitario: precio, subtotal: precio }];
     });
+    // En mobile, mostrar notificación visual pero no forzar cambio de vista
   };
 
   const setQty = (id: string, qty: number) => {
@@ -84,10 +86,31 @@ export const POSPage = () => {
 
   return (
     <AppLayout title="Punto de Venta" subtitle={cliente?.nombre}>
+      {/* ─── Mobile nav ─────────────────────────────── */}
+      <div className="lg:hidden flex rounded-xl border border-slate-200 bg-white p-0.5 gap-0.5 mb-4">
+        <button
+          onClick={() => setMobileView('productos')}
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${mobileView === 'productos' ? 'bg-navy-700 text-white shadow-sm' : 'text-slate-500'}`}
+        >
+          <Search size={15} /> Productos
+        </button>
+        <button
+          onClick={() => setMobileView('carrito')}
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 relative ${mobileView === 'carrito' ? 'bg-navy-700 text-white shadow-sm' : 'text-slate-500'}`}
+        >
+          <ShoppingCart size={15} /> Carrito
+          {cart.length > 0 && (
+            <span className="absolute top-1 right-3 w-4 h-4 rounded-full bg-teal-500 text-white text-2xs font-bold flex items-center justify-center">
+              {cart.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       <div className="flex gap-5 min-h-0">
 
         {/* ── Productos ── */}
-        <div className="flex-1 min-w-0 flex flex-col gap-4">
+        <div className={`flex-1 min-w-0 flex flex-col gap-4 ${mobileView === 'carrito' ? 'hidden lg:flex' : ''}`}>
           {/* Toolbar */}
           <div className="flex items-center gap-3">
             <div className="flex-1">
@@ -156,7 +179,7 @@ export const POSPage = () => {
         </div>
 
         {/* ── Panel derecho — Carrito ── */}
-        <div className="w-80 flex-shrink-0 flex flex-col gap-3">
+        <div className={`w-full lg:w-80 flex-shrink-0 flex flex-col gap-3 ${mobileView === 'productos' ? 'hidden lg:flex' : ''}`}>
 
           {/* Cart header */}
           <div className="card-p flex-1 flex flex-col min-h-0" style={{ maxHeight: 'calc(100vh - 80px)' }}>
