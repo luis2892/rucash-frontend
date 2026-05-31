@@ -30,3 +30,45 @@ export interface AuthResponse {
   usuario: Usuario;
   cliente: Cliente;
 }
+
+// ---- Sprint 3: POS Types ----
+
+export interface Producto {
+  id: string;
+  cliente_id: string;
+  nombre: string;
+  descripcion?: string;
+  codigo_barras: string;
+  categoria?: string;
+  precio_usd: number;
+  precio_sol: number;
+  costo_usd?: number;
+  stock_tienda: number;
+  stock_almacen: number;
+  activo: boolean;
+  created_at: string;
+}
+
+export interface DetalleVenta {
+  producto_id: string;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal: number;
+}
+
+export interface Venta {
+  id: string;
+  cliente_id: string;
+  usuario_id: string;
+  items: DetalleVenta[];
+  moneda: 'USD' | 'SOL';
+  subtotal: number;
+  impuesto: number;
+  total: number;
+  metodo_pago: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO';
+  monto_pagado: number;
+  cambio: number;
+  estado: 'COMPLETADA' | 'PENDIENTE' | 'CANCELADA';
+  notas?: string;
+  created_at: string;
+}

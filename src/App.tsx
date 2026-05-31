@@ -5,6 +5,7 @@ import {
   ForgotPasswordPage, ResetPasswordPage, Enable2FAPage,
   DashboardPage,
 } from './pages';
+import { POSPage } from './pages/pos/POSPage';
 
 function App() {
   const { isAuthenticated, accessToken } = useAuthStore();
@@ -19,17 +20,16 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Auth routes (públicas) */}
+        {/* Públicas */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Auth routes (protegidas) */}
-        <Route path="/enable-2fa" element={<ProtectedRoute element={<Enable2FAPage />} />} />
-
-        {/* Dashboard */}
-        <Route path="/dashboard" element={<ProtectedRoute element={<DashboardPage />} />} />
+        {/* Protegidas */}
+        <Route path="/enable-2fa"  element={<ProtectedRoute element={<Enable2FAPage />} />} />
+        <Route path="/dashboard"   element={<ProtectedRoute element={<DashboardPage />} />} />
+        <Route path="/pos"         element={<ProtectedRoute element={<POSPage />} />} />
 
         {/* Redirects */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
