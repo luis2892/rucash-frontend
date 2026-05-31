@@ -4,6 +4,7 @@ import { Settings, Save, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
+import { AppLayout } from '../../components/Layout/AppLayout';
 import { api } from '../../services/api';
 
 type ConfigData = {
@@ -60,10 +61,11 @@ export const AdminConfigPage = () => {
   };
 
   if (isLoading) {
-    return <div className="p-6">Cargando...</div>;
+    return <AppLayout><div className="p-6">Cargando...</div></AppLayout>;
   }
 
   return (
+    <AppLayout>
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
@@ -199,5 +201,6 @@ export const AdminConfigPage = () => {
         </Button>
       </form>
     </div>
+    </AppLayout>
   );
 };

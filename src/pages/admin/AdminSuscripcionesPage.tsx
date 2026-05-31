@@ -3,6 +3,7 @@ import { Plus, Edit2, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ResponsiveTable } from '../../components/ui/ResponsiveTable';
+import { AppLayout } from '../../components/Layout/AppLayout';
 import { api } from '../../services/api';
 
 interface Suscripcion {
@@ -46,7 +47,7 @@ export const AdminSuscripcionesPage = () => {
   };
 
   if (isLoading) {
-    return <div className="p-6">Cargando...</div>;
+    return <AppLayout><div className="p-6">Cargando...</div></AppLayout>;
   }
 
   const columns = [
@@ -61,6 +62,7 @@ export const AdminSuscripcionesPage = () => {
   ];
 
   return (
+    <AppLayout>
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-8 flex justify-between items-center">
         <div>
@@ -90,5 +92,6 @@ export const AdminSuscripcionesPage = () => {
         />
       </Card>
     </div>
+    </AppLayout>
   );
 };

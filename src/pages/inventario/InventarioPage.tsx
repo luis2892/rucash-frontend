@@ -37,7 +37,7 @@ export const InventarioPage = () => {
   const cargarProductos = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/productos/avanzado/buscar', {
+      const response = await api.get('/productos/buscar', {
         params: {
           search: searchTerm || undefined,
           categoria: selectedCategory || undefined,

@@ -21,7 +21,7 @@ export const FinancieroPage = () => {
       try {
         const [deudasRes, cuentasRes] = await Promise.all([
           api.get('/deudas?estado=ACTIVA'),
-          api.get('/cuentas'),
+          api.get('/finanzas/cuentas'),
         ]);
 
         const deudas = deudasRes.data.deudas || [];

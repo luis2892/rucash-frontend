@@ -30,7 +30,7 @@ export const CuentasPage = () => {
   useEffect(() => {
     const loadCuentas = async () => {
       try {
-        const response = await api.get('/cuentas');
+        const response = await api.get('/finanzas/cuentas');
         setCuentas(response.data.cuentas || []);
       } catch (err) {
         setError('Error al cargar cuentas');
@@ -45,10 +45,10 @@ export const CuentasPage = () => {
   const onSubmit = async (data: Cuenta) => {
     try {
       if (editingId) {
-        const response = await api.patch(`/cuentas/${editingId}`, data);
+        const response = await api.patch(`/finanzas/cuentas/${editingId}`, data);
         setCuentas(prev => prev.map(c => c.id === editingId ? response.data.cuenta : c));
       } else {
-        const response = await api.post('/cuentas', data);
+        const response = await api.post('/finanzas/cuentas', data);
         setCuentas([...cuentas, response.data.cuenta]);
       }
       setIsModalOpen(false);
@@ -63,7 +63,7 @@ export const CuentasPage = () => {
     if (!window.confirm('¿Eliminar esta cuenta?')) return;
 
     try {
-      await api.delete(`/cuentas/${id}`);
+      await api.patch(`/finanzas/cuentas/${id}`, { activo: false });
       setCuentas(prev => prev.filter(c => c.id !== id));
     } catch (err) {
       setError('Error al eliminar cuenta');
