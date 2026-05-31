@@ -14,6 +14,8 @@ import { MetasPage } from './pages/analisis/MetasPage';
 import { AnalisisPage } from './pages/analisis/AnalisisPage';
 import { ReportesPage } from './pages/reportes/ReportesPage';
 import { ConstructorReportesPage } from './pages/reportes/ConstructorReportesPage';
+import { DashboardDuenoPage } from './pages/dashboard/DashboardDuenoPage';
+import { EquipoPage } from './pages/equipo/EquipoPage';
 
 function App() {
   const { isAuthenticated, accessToken } = useAuthStore();
@@ -46,6 +48,8 @@ function App() {
         <Route path="/analisis"           element={<ProtectedRoute element={<AnalisisPage />} />} />
         <Route path="/reportes"           element={<ProtectedRoute element={<ReportesPage />} />} />
         <Route path="/reportes/constructor" element={<ProtectedRoute element={<ConstructorReportesPage />} />} />
+        <Route path="/dashboard-dueno" element={<ProtectedRoute element={<DashboardDuenoPage />} />} />
+        <Route path="/equipo"          element={<ProtectedRoute element={<EquipoPage />} />} />
 
         {/* Redirects */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

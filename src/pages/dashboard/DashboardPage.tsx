@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { AppLayout } from '../../components/Layout/AppLayout';
 import {
   ShoppingCart, Package, TrendingUp, TrendingDown, Target,
-  BarChart3, LineChart, ArrowUpRight, Clock,
+  BarChart3, LineChart, ArrowUpRight, Clock, Users,
 } from 'lucide-react';
 
 const MODULES = [
@@ -14,7 +14,8 @@ const MODULES = [
   { icon: TrendingUp,   label: 'Flujo de Caja',  desc: 'Análisis financiero', path: '/flujo-caja', color: 'bg-sky-600',     available: true  },
   { icon: Target,       label: 'Metas',          desc: 'Objetivos y avance',  path: '/metas',      color: 'bg-purple-600',  available: true  },
   { icon: LineChart,    label: 'Análisis',        desc: 'Performance ventas',  path: '/analisis',   color: 'bg-rose-500',    available: true  },
-  { icon: BarChart3,    label: 'Reportes',         desc: 'Exportar datos',      path: '/reportes',   color: 'bg-slate-600',   available: true  },
+  { icon: BarChart3,    label: 'Reportes',         desc: 'Exportar datos',      path: '/reportes',       color: 'bg-slate-600',   available: true  },
+  { icon: Users,        label: 'Mi Equipo',        desc: 'Gestión de usuarios', path: '/equipo',          color: 'bg-violet-600',  available: true  },
 ];
 
 const STATS = [
