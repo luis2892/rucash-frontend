@@ -10,6 +10,8 @@ import { InventarioPage } from './pages/inventario/InventarioPage';
 import { ProductoDetailPage } from './pages/inventario/ProductoDetailPage';
 import { DeudasPage } from './pages/finanzas/DeudasPage';
 import { FlujoCajaPage } from './pages/finanzas/FlujoCajaPage';
+import { MetasPage } from './pages/analisis/MetasPage';
+import { AnalisisPage } from './pages/analisis/AnalisisPage';
 
 function App() {
   const { isAuthenticated, accessToken } = useAuthStore();
@@ -38,6 +40,8 @@ function App() {
         <Route path="/inventario/:id" element={<ProtectedRoute element={<ProductoDetailPage />} />} />
         <Route path="/deudas"      element={<ProtectedRoute element={<DeudasPage />} />} />
         <Route path="/flujo-caja"  element={<ProtectedRoute element={<FlujoCajaPage />} />} />
+        <Route path="/metas"       element={<ProtectedRoute element={<MetasPage />} />} />
+        <Route path="/analisis"    element={<ProtectedRoute element={<AnalisisPage />} />} />
 
         {/* Redirects */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

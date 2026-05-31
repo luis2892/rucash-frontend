@@ -2,18 +2,20 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ShoppingCart, Package, TrendingUp,
-  Target, BarChart3, Shield, LogOut, ChevronRight,
+  LayoutDashboard, ShoppingCart, Package, TrendingDown,
+  TrendingUp, Target, BarChart3, LineChart, Shield, LogOut, ChevronRight,
 } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 
 const NAV = [
-  { icon: LayoutDashboard, label: 'Dashboard',     path: '/dashboard' },
+  { icon: LayoutDashboard, label: 'Dashboard',      path: '/dashboard' },
   { icon: ShoppingCart,    label: 'Punto de Venta', path: '/pos' },
-  { icon: Package,         label: 'Inventario',     path: '/inventario', soon: true },
-  { icon: TrendingUp,      label: 'Financiero',     path: '/financiero', soon: true },
-  { icon: Target,          label: 'Metas',          path: '/metas',      soon: true },
-  { icon: BarChart3,       label: 'Reportes',       path: '/reportes',   soon: true },
+  { icon: Package,         label: 'Inventario',     path: '/inventario' },
+  { icon: TrendingDown,    label: 'Deudas',         path: '/deudas' },
+  { icon: TrendingUp,      label: 'Flujo de Caja',  path: '/flujo-caja' },
+  { icon: Target,          label: 'Metas',          path: '/metas' },
+  { icon: LineChart,       label: 'Análisis',       path: '/analisis' },
+  { icon: BarChart3,       label: 'Reportes',       path: '/reportes', soon: true },
 ];
 
 const BOTTOM_NAV = [
