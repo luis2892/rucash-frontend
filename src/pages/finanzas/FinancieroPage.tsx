@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingDown, TrendingUp, DollarSign, AlertTriangle, ArrowRight } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { api } from '../../services/api';
 

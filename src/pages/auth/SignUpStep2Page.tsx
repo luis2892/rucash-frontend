@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuthStore } from '../../store/authStore';
@@ -24,42 +24,37 @@ export const SignUpStep2Page = () => {
     defaultValues: { empresa_nombre: '', ruc: '', industria: '', provincia: '', ciudad: '' },
   });
 
+  useEffect(() => {
+    const step1 = sessionStorage.getItem('signupStep1');
+    if (!step1) navigate('/auth/signup-step1');
+  }, [navigate]);
+
   const onSubmit = async (data: FormData) => {
     setLocalError(null);
     clearError();
 
+    const step1Raw = sessionStorage.getItem('signupStep1');
+    if (!step1Raw) {
+      setLocalError('Datos del paso anterior no encontrados.');
+      navigate('/auth/signup-step1');
+      return;
+    }
+
     try {
-      const step1Data = sessionStorage.getItem('signupStep1');
-      if (!step1Data) {
-        setLocalError('Datos del paso anterior no encontrados. Comienza nuevamente.');
-        navigate('/auth/signup-step1');
-        return;
-      }
+      const step1 = JSON.parse(step1Raw);
+      const payload = {
+        email: step1.email,
+        password: step1.password,
+        full_name: step1.full_name,
+        whatsapp: step1.whatsapp,
+        empresa_nombre: data.empresa_nombre,
+        ruc: data.ruc,
+        industria: data.industria,
+        provincia: data.provincia,
+        ciudad: data.ciudad,
+      };
 
-      const step1 = JSON.parse(step1Data);
-      const payload = { ...step1, ...data };
-
-      // Hacer signup completo
-      const response = await useAuthStore.getState().signup(payload);
-
-      // Guardar empresa config
-      const clienteId = useAuthStore.getState().cliente?.id;
-      if (clienteId) {
-        await fetch('/api/config/empresa', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
-          },
-          body: JSON.stringify({
-            moneda_preferida: 'USD',
-            provincia: data.provincia,
-            ciudad: data.ciudad,
-            industria: data.industria,
-          }),
-        });
-      }
-
+      await signup(payload);
       sessionStorage.removeItem('signupStep1');
       navigate('/dashboard');
     } catch (err: any) {
@@ -75,31 +70,23 @@ export const SignUpStep2Page = () => {
       <div className="hidden lg:flex lg:w-[44%] bg-navy-700 flex-col relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-12 left-12 w-60 h-60 bg-navy-800/60 rounded-full blur-2xl" />
-
         <div className="relative z-10 flex flex-col h-full px-12 py-10">
           <Logo size="md" light />
-
           <div className="flex-1 flex flex-col justify-center max-w-xs mt-10">
             <div className="w-14 h-14 rounded-2xl bg-teal-500/20 flex items-center justify-center text-2xl mb-6">🏢</div>
-            <h2 className="text-3xl font-extrabold text-white leading-tight mb-4">
-              Información de empresa
-            </h2>
-            <p className="text-slate-300 text-sm leading-relaxed mb-8">
-              Completa los datos de tu negocio para finalizar el registro.
-            </p>
-
+            <h2 className="text-3xl font-extrabold text-white leading-tight mb-4">Información de empresa</h2>
+            <p className="text-slate-300 text-sm leading-relaxed mb-8">Completa los datos de tu negocio para finalizar el registro.</p>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full bg-slate-600 text-white text-xs font-bold flex items-center justify-center">1</div>
-                <span className="text-slate-400 text-sm">Datos personales</span>
+                <div className="w-6 h-6 rounded-full bg-teal-500/30 text-white text-xs font-bold flex items-center justify-center">1</div>
+                <span className="text-slate-400 text-sm line-through opacity-60">Datos personales</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6 rounded-full bg-teal-500 text-white text-xs font-bold flex items-center justify-center">2</div>
-                <span className="text-slate-200 text-sm font-medium">Datos de empresa (ahora)</span>
+                <span className="text-slate-200 text-sm font-medium">Datos de empresa</span>
               </div>
             </div>
           </div>
-
           <p className="text-slate-500 text-xs">© 2026 TARUK · RUCASH</p>
         </div>
       </div>
@@ -107,7 +94,6 @@ export const SignUpStep2Page = () => {
       {/* Panel derecho */}
       <div className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-20 bg-slate-50 overflow-y-auto py-10">
         <div className="lg:hidden mb-6"><Logo size="sm" /></div>
-
         <div className="w-full max-w-md mx-auto animate-slide-up">
           <div className="mb-7">
             <h2 className="text-2xl font-bold text-slate-900 mb-1">Información de empresa</h2>
@@ -123,64 +109,51 @@ export const SignUpStep2Page = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <Input
-              label="Nombre de empresa"
-              required
-              placeholder="Mi tienda"
+              label="Nombre de empresa" required
+              placeholder="Mi Tienda SAC"
               icon={<Building2 size={16} />}
-              {...register('empresa_nombre', { required: 'Nombre requerido' })}
+              {...register('empresa_nombre', { required: 'Nombre de empresa requerido' })}
               error={errors.empresa_nombre?.message}
             />
-
             <Input
-              label="RUC"
-              required
-              placeholder="12345678901"
+              label="RUC" required
+              placeholder="20123456789"
               icon={<Hash size={16} />}
-              {...register('ruc', { required: 'RUC requerido' })}
+              {...register('ruc', {
+                required: 'RUC requerido',
+                minLength: { value: 11, message: 'El RUC debe tener 11 dígitos' },
+                maxLength: { value: 11, message: 'El RUC debe tener 11 dígitos' },
+                pattern: { value: /^\d{11}$/, message: 'Solo números, 11 dígitos' },
+              })}
               error={errors.ruc?.message}
             />
-
             <Input
-              label="Industria"
-              required
-              placeholder="Retail, Alimentos, etc"
+              label="Industria / Rubro" required
+              placeholder="Retail, Alimentos, Tecnología..."
               icon={<Briefcase size={16} />}
               {...register('industria', { required: 'Industria requerida' })}
               error={errors.industria?.message}
             />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Provincia" required
+                placeholder="Lima"
+                icon={<MapPin size={16} />}
+                {...register('provincia', { required: 'Requerido' })}
+                error={errors.provincia?.message}
+              />
+              <Input
+                label="Ciudad" required
+                placeholder="Lima"
+                {...register('ciudad', { required: 'Requerido' })}
+                error={errors.ciudad?.message}
+              />
+            </div>
 
-            <Input
-              label="Provincia"
-              required
-              placeholder="Lima"
-              icon={<MapPin size={16} />}
-              {...register('provincia', { required: 'Provincia requerida' })}
-              error={errors.provincia?.message}
-            />
-
-            <Input
-              label="Ciudad"
-              required
-              placeholder="Lima"
-              {...register('ciudad', { required: 'Ciudad requerida' })}
-              error={errors.ciudad?.message}
-            />
-
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mt-6"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Completando...' : 'Completar registro'}
+            <Button type="submit" variant="primary" className="w-full mt-2" disabled={isLoading}>
+              {isLoading ? 'Creando cuenta...' : 'Completar registro'}
             </Button>
-
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full"
-              onClick={() => navigate('/auth/signup-step1')}
-            >
+            <Button type="button" variant="secondary" className="w-full" onClick={() => navigate('/auth/signup-step1')}>
               <ArrowLeft size={16} /> Volver al paso anterior
             </Button>
           </form>

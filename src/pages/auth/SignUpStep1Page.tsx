@@ -23,7 +23,7 @@ export const SignUpStep1Page = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     defaultValues: { email: '', password: '', full_name: '', whatsapp: '' },
   });
-  const password = watch('password');
+  const watchedPassword = watch('password'); // usado para validar confirmPassword
 
   const onSubmit = async (data: FormData) => {
     setError(null);
@@ -157,7 +157,10 @@ export const SignUpStep1Page = () => {
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               icon={<Lock size={16} />}
-              {...register('confirmPassword', { required: 'Confirma tu contraseña' })}
+              {...register('confirmPassword', {
+                required: 'Confirma tu contraseña',
+                validate: (v) => v === watchedPassword || 'Las contraseñas no coinciden',
+              })}
               error={errors.confirmPassword?.message}
             />
 

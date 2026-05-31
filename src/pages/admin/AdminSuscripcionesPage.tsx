@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ResponsiveTable } from '../../components/ui/ResponsiveTable';

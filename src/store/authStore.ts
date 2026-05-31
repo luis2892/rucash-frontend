@@ -1,11 +1,28 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
-import { LoginPayload, SignUpPayload, Usuario, Cliente } from '../types';
+import { LoginPayload, SignUpPayload } from '../types';
+
+export interface UsuarioAuth {
+  id: string;
+  email: string;
+  nombre_completo: string;
+  rol: string;
+  es_admin_sistema: boolean;
+  whatsapp?: string;
+}
+
+export interface ClienteAuth {
+  id: string;
+  nombre: string;
+  plan: string;
+  estado: string;
+  ruc?: string;
+}
 
 interface AuthStore {
-  usuario: Usuario | null;
-  cliente: Cliente | null;
+  usuario: UsuarioAuth | null;
+  cliente: ClienteAuth | null;
   accessToken: string | null;
   refreshToken: string | null;
   isLoading: boolean;
@@ -17,6 +34,7 @@ interface AuthStore {
   refreshAccessToken: () => Promise<void>;
   clearError: () => void;
   isAuthenticated: () => boolean;
+  isAdminSistema: () => boolean;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -35,14 +53,7 @@ export const useAuthStore = create<AuthStore>()(
           const response = await api.post('/auth/login', payload);
           const { access_token, refresh_token, usuario, cliente } = response.data;
 
-          set({
-            usuario,
-            cliente,
-            accessToken: access_token,
-            refreshToken: refresh_token,
-            isLoading: false,
-          });
-
+          set({ usuario, cliente, accessToken: access_token, refreshToken: refresh_token, isLoading: false });
           api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
         } catch (error: any) {
           const message = error.response?.data?.message || 'Error en login';
@@ -57,14 +68,7 @@ export const useAuthStore = create<AuthStore>()(
           const response = await api.post('/auth/signup', payload);
           const { access_token, refresh_token, usuario, cliente } = response.data;
 
-          set({
-            usuario,
-            cliente,
-            accessToken: access_token,
-            refreshToken: refresh_token,
-            isLoading: false,
-          });
-
+          set({ usuario, cliente, accessToken: access_token, refreshToken: refresh_token, isLoading: false });
           api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
         } catch (error: any) {
           const message = error.response?.data?.message || 'Error en signup';
@@ -74,43 +78,29 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: () => {
-        set({
-          usuario: null,
-          cliente: null,
-          accessToken: null,
-          refreshToken: null,
-          error: null,
-        });
+        set({ usuario: null, cliente: null, accessToken: null, refreshToken: null, error: null });
         delete api.defaults.headers.common['Authorization'];
       },
 
       refreshAccessToken: async () => {
         const state = get();
-        if (!state.refreshToken) {
-          state.logout();
-          return;
-        }
+        if (!state.refreshToken) { state.logout(); return; }
 
         try {
-          const response = await api.post('/auth/refresh-token', {
-            refresh_token: state.refreshToken,
-          });
-
+          const response = await api.post('/auth/refresh-token', { refresh_token: state.refreshToken });
           const { access_token } = response.data;
           set({ accessToken: access_token });
           api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-        } catch (error) {
-          console.error('Refresh token failed');
+        } catch {
           state.logout();
         }
       },
 
       clearError: () => set({ error: null }),
 
-      isAuthenticated: () => {
-        const { accessToken } = get();
-        return !!accessToken;
-      },
+      isAuthenticated: () => !!get().accessToken,
+
+      isAdminSistema: () => get().usuario?.es_admin_sistema === true,
     }),
     {
       name: 'auth-storage',
