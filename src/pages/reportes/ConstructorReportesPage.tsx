@@ -123,9 +123,10 @@ export const ConstructorReportesPage = () => {
     setLoading(true);
     setVista('preview');
     try {
-      const res = await api.post(`/reportes/${guardadoId}/generar`);
+      // Obtener datos del reporte guardado desde el endpoint disponible
+      const res = await api.get(`/reportes/${guardadoId}`);
       let filas = res.data.datos || [];
-      // Filtrar por fechas
+      // Filtrar por fechas en frontend
       if (config.filtroFechaInicio) {
         filas = filas.filter((r: any) => new Date(r.created_at || r.fecha_inicio || '') >= new Date(config.filtroFechaInicio));
       }
@@ -146,7 +147,7 @@ export const ConstructorReportesPage = () => {
     setMsg('');
     try {
       if (guardadoId) {
-        await api.put(`/reportes/${guardadoId}`, { nombre: config.nombre, descripcion: config.descripcion });
+        await api.patch(`/reportes/${guardadoId}`, { nombre: config.nombre, descripcion: config.descripcion });
         setMsg('✅ Reporte actualizado');
       } else {
         const res = await api.post('/reportes', { nombre: config.nombre, descripcion: config.descripcion });
@@ -160,9 +161,12 @@ export const ConstructorReportesPage = () => {
   const exportarCSV = async () => {
     if (!guardadoId) { setMsg('Guarda el reporte primero.'); return; }
     try {
-      await api.post(`/reportes/${guardadoId}/generar`);
-      const res = await api.get(`/reportes/${guardadoId}/exportar-csv`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
+      // Exportar los datos en memoria como CSV
+      const campos = camposParaVista;
+      const headers = campos.map(c => c.label).join(',');
+      const rows = datos.map(row => campos.map(c => fmt(c.key, row[c.key])).join(','));
+      const csv = [headers, ...rows].join('\n');
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
       const a = document.createElement('a'); a.href = url;
       a.download = `${config.nombre || 'reporte'}.csv`;
       document.body.appendChild(a); a.click(); a.remove();
@@ -268,7 +272,7 @@ export const ConstructorReportesPage = () => {
             <button onClick={exportarCSV} className="btn-secondary btn-md w-full flex items-center gap-2">
               <Download size={16} /> Exportar CSV
             </button>
-            <button onClick={() => guardadoId && api.post(`/reportes/${guardadoId}/exportar-pdf`).then(() => setMsg('✅ PDF marcado')).catch(console.error)}
+            <button onClick={() => setMsg('Exportación PDF no disponible actualmente. Use CSV.')}
               className="btn-secondary btn-md w-full flex items-center gap-2">
               <FileText size={16} /> Exportar PDF
             </button>

@@ -61,22 +61,21 @@ export const InventarioPage = () => {
       .catch(() => {});
   }, []);
 
-  const descargarReporte = async () => {
-    try {
-      const response = await api.get('/productos/reporte/inventario', {
-        params: { formato: 'csv' },
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `inventario-${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error descargando reporte:', error);
-    }
+  const descargarReporte = () => {
+    // Exportar inventario local como CSV desde los datos ya cargados
+    const headers = ['Código', 'Nombre', 'Categoría', 'Precio USD', 'Precio SOL', 'Stock Tienda', 'Stock Almacén'];
+    const rows = productos.map(p => [
+      p.codigo_barras, p.nombre, p.categoria || '', p.precio_usd.toFixed(2),
+      p.precio_sol.toFixed(2), p.stock_tienda, p.stock_almacen,
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `inventario-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   const eliminarProducto = async (id: string) => {
@@ -336,7 +335,7 @@ const ProductoModal = ({ producto, categorias, onClose, onSave }: ProductoModalP
       };
 
       if (producto) {
-        await api.put(`/productos/${producto.id}`, payload);
+        await api.patch(`/productos/${producto.id}`, payload);
       } else {
         await api.post('/productos', payload);
       }

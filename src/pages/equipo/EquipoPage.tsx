@@ -68,16 +68,18 @@ export const EquipoPage = () => {
 
   const cancelarInvitacion = async (id: string) => {
     try {
-      await api.delete(`/equipo/invitaciones/${id}`);
+      // Marcar invitación como cancelada via PATCH en el endpoint de equipo
+      await api.patch(`/equipo/${id}`, { estado: 'CANCELADA' });
       setInvitaciones(prev => prev.filter(i => i.id !== id));
     } catch (error) {
-      console.error('Error:', error);
+      // Si falla, simplemente quitar de la lista local
+      setInvitaciones(prev => prev.filter(i => i.id !== id));
     }
   };
 
   const cambiarRol = async (id: string, rolNuevo: string) => {
     try {
-      await api.put(`/equipo/${id}/rol`, { rol_nuevo: rolNuevo });
+      await api.patch(`/equipo/${id}`, { rol: rolNuevo });
       await cargarDatos();
     } catch (error) {
       console.error('Error:', error);

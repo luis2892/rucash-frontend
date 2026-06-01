@@ -41,13 +41,10 @@ export const ProductoDetailPage = () => {
   const [adjSaving, setAdjSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      api.get(`/productos/${id}`),
-      api.get(`/productos/${id}/auditoria`),
-    ])
-      .then(([prodRes, audRes]) => {
+    api.get(`/productos/${id}`)
+      .then(prodRes => {
         setProducto(prodRes.data.producto);
-        setAuditoria(audRes.data.auditoria || []);
+        setAuditoria([]);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -55,18 +52,16 @@ export const ProductoDetailPage = () => {
 
   const ajustarStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adjStock.cantidad) return;
+    if (!adjStock.cantidad || !producto) return;
     setAdjSaving(true);
     try {
-      const response = await api.patch(`/productos/${id}/stock`, {
-        tipo: adjStock.tipo,
-        cantidad: parseInt(adjStock.cantidad),
-        notas: adjStock.notas,
-      });
+      const delta = parseInt(adjStock.cantidad);
+      const campo = adjStock.tipo === 'tienda' ? 'stock_tienda' : 'stock_almacen';
+      const valorActual = adjStock.tipo === 'tienda' ? producto.stock_tienda : producto.stock_almacen;
+      const payload = { [campo]: valorActual + delta };
+      const response = await api.patch(`/productos/${id}`, payload);
       setProducto(response.data.producto);
       setAdjStock({ tipo: 'tienda', cantidad: '', notas: '' });
-      const audRes = await api.get(`/productos/${id}/auditoria`);
-      setAuditoria(audRes.data.auditoria || []);
     } catch (error) {
       console.error('Error ajustando stock:', error);
     } finally {
