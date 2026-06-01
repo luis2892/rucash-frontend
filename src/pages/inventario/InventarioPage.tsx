@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { AppLayout } from '../../components/Layout/AppLayout';
-import { Search, Plus, Edit2, Trash2, Download, Eye, AlertCircle, Filter, X } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Download, Eye, AlertCircle, Filter, X, Warehouse, Store } from 'lucide-react';
 
 interface Producto {
   id: string;
@@ -15,6 +15,8 @@ interface Producto {
   stock_tienda: number;
   stock_almacen: number;
   nivel_minimo_stock?: number;
+  nivel_maximo_stock?: number;
+  marca_id?: string;
   discontinuado?: boolean;
   proveedor?: string;
 }
@@ -24,9 +26,34 @@ interface Categoria {
   nombre: string;
 }
 
+interface Resumen {
+  total_productos: number;
+  tienda: {
+    cantidad_total: number;
+    valor_total: number;
+    productos_stock_cero: number;
+  };
+  almacen: {
+    cantidad_total: number;
+    valor_total: number;
+    productos_stock_cero: number;
+  };
+}
+
+interface Alerta {
+  id: string;
+  nombre: string;
+  tipo: 'STOCK_BAJO' | 'SIN_STOCK' | 'EXCESO';
+  stock_actual: number;
+  nivel_minimo: number;
+}
+
 export const InventarioPage = () => {
+  const [activeTab, setActiveTab] = useState<'tienda' | 'almacen'>('tienda');
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [resumen, setResumen] = useState<Resumen | null>(null);
+  const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -34,26 +61,27 @@ export const InventarioPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProducto, setEditingProducto] = useState<Producto | null>(null);
 
-  const cargarProductos = useCallback(async () => {
+  const cargarInventario = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/productos/buscar', {
-        params: {
-          search: searchTerm || undefined,
-          categoria: selectedCategory || undefined,
-        },
-      });
-      setProductos(response.data.productos || []);
+      const [respInventario, respAlertas, respResumen] = await Promise.all([
+        api.get(`/inventario?ubicacion=${activeTab}`),
+        api.get('/inventario/alertas'),
+        api.get('/inventario/resumen'),
+      ]);
+      setProductos(respInventario.data.productos || []);
+      setAlertas(respAlertas.data.alertas || []);
+      setResumen(respResumen.data);
     } catch (error) {
-      console.error('Error cargando productos:', error);
+      console.error('Error cargando inventario:', error);
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, selectedCategory]);
+  }, [activeTab]);
 
   useEffect(() => {
-    cargarProductos();
-  }, [cargarProductos]);
+    cargarInventario();
+  }, [cargarInventario, activeTab]);
 
   useEffect(() => {
     api.get('/categorias')
@@ -62,17 +90,22 @@ export const InventarioPage = () => {
   }, []);
 
   const descargarReporte = () => {
-    // Exportar inventario local como CSV desde los datos ya cargados
-    const headers = ['Código', 'Nombre', 'Categoría', 'Precio USD', 'Precio SOL', 'Stock Tienda', 'Stock Almacén'];
+    const ubicacion = activeTab === 'tienda' ? 'Tienda' : 'Almacén';
+    const headers = ['Código', 'Nombre', 'Categoría', 'Precio USD', `Stock ${ubicacion}`, 'Valor Total'];
+    const stockField = activeTab === 'tienda' ? 'stock_tienda' : 'stock_almacen';
     const rows = productos.map(p => [
-      p.codigo_barras, p.nombre, p.categoria || '', p.precio_usd.toFixed(2),
-      p.precio_sol.toFixed(2), p.stock_tienda, p.stock_almacen,
+      p.codigo_barras,
+      p.nombre,
+      p.categoria || '',
+      p.precio_usd.toFixed(2),
+      p[stockField as keyof Producto],
+      (p.precio_usd * (p[stockField as keyof Producto] as number)).toFixed(2),
     ]);
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `inventario-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `inventario-${activeTab}-${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -82,16 +115,33 @@ export const InventarioPage = () => {
     if (!confirm('¿Eliminar este producto?')) return;
     try {
       await api.delete(`/productos/${id}`);
-      cargarProductos();
+      cargarInventario();
     } catch (error) {
       console.error('Error eliminando producto:', error);
     }
   };
 
-  const totalProductos = productos.length;
-  const totalValor = productos.reduce((sum, p) => sum + p.precio_usd * (p.stock_tienda + p.stock_almacen), 0);
-  const sinStock = productos.filter(p => p.stock_tienda === 0).length;
-  const stockBajo = productos.filter(p => p.stock_tienda < (p.nivel_minimo_stock || 5)).length;
+  const getIndicador = (producto: Producto) => {
+    const stock = activeTab === 'tienda' ? producto.stock_tienda : producto.stock_almacen;
+    const minimo = producto.nivel_minimo_stock || 5;
+    const maximo = producto.nivel_maximo_stock || 100;
+
+    if (stock === 0) return { tipo: 'SIN_STOCK', color: 'bg-red-100 border-red-300', icon: '🔴', label: 'Sin stock' };
+    if (stock < minimo) return { tipo: 'STOCK_BAJO', color: 'bg-amber-100 border-amber-300', icon: '🟡', label: 'Stock bajo' };
+    if (stock > maximo) return { tipo: 'EXCESO', color: 'bg-purple-100 border-purple-300', icon: '🟣', label: 'Exceso' };
+    return { tipo: 'NORMAL', color: 'bg-green-100 border-green-300', icon: '🟢', label: 'Normal' };
+  };
+
+  const datosResumen = activeTab === 'tienda' ? resumen?.tienda : resumen?.almacen;
+  const ubicacionLabel = activeTab === 'tienda' ? 'Tienda' : 'Almacén';
+
+  const productosVisibles = productos.filter(p => {
+    const matchSearch = !searchTerm ||
+      p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.codigo_barras.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchCategory = !selectedCategory || p.categoria === selectedCategory;
+    return matchSearch && matchCategory;
+  });
 
   return (
     <AppLayout>
@@ -110,20 +160,71 @@ export const InventarioPage = () => {
         </button>
       </div>
 
-      {/* Métricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: 'Total Productos', value: totalProductos, color: 'text-slate-900' },
-          { label: 'Valor Inventario', value: `$${totalValor.toFixed(2)}`, color: 'text-teal-600' },
-          { label: 'Sin Stock', value: sinStock, color: sinStock > 0 ? 'text-red-600' : 'text-green-600' },
-          { label: 'Stock Bajo', value: stockBajo, color: stockBajo > 0 ? 'text-amber-600' : 'text-green-600' },
-        ].map(m => (
-          <div key={m.label} className="card-p">
-            <p className="text-xs text-slate-500 mb-1">{m.label}</p>
-            <p className={`text-2xl font-bold ${m.color}`}>{m.value}</p>
-          </div>
-        ))}
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab('tienda')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${
+            activeTab === 'tienda'
+              ? 'bg-teal-600 text-white shadow-lg'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
+        >
+          <Store size={18} />
+          Tienda
+        </button>
+        <button
+          onClick={() => setActiveTab('almacen')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${
+            activeTab === 'almacen'
+              ? 'bg-teal-600 text-white shadow-lg'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
+        >
+          <Warehouse size={18} />
+          Almacén
+        </button>
       </div>
+
+      {/* Resumen */}
+      {datosResumen && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="card-p">
+            <p className="text-xs text-slate-500 mb-1">Cantidad Total</p>
+            <p className="text-2xl font-bold text-slate-900">{datosResumen.cantidad_total}</p>
+          </div>
+          <div className="card-p">
+            <p className="text-xs text-slate-500 mb-1">Valor Total</p>
+            <p className="text-2xl font-bold text-teal-600">${datosResumen.valor_total.toFixed(2)}</p>
+          </div>
+          <div className={`card-p ${datosResumen.productos_stock_cero > 0 ? 'border-red-200' : ''}`}>
+            <p className="text-xs text-slate-500 mb-1">Sin Stock</p>
+            <p className={`text-2xl font-bold ${datosResumen.productos_stock_cero > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              {datosResumen.productos_stock_cero}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Alertas */}
+      {alertas.length > 0 && (
+        <div className="mb-6 space-y-2">
+          {alertas.slice(0, 3).map(alerta => {
+            const colors = alerta.tipo === 'SIN_STOCK' ? 'bg-red-50 border-red-200 text-red-800' :
+                          alerta.tipo === 'STOCK_BAJO' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+                          'bg-purple-50 border-purple-200 text-purple-800';
+            return (
+              <div key={alerta.id} className={`flex items-center gap-3 border rounded-xl px-4 py-3 text-sm ${colors}`}>
+                <AlertCircle size={18} className="flex-shrink-0" />
+                <span><strong>{alerta.nombre}</strong> - Stock: {alerta.stock_actual} (Mínimo: {alerta.nivel_minimo})</span>
+              </div>
+            );
+          })}
+          {alertas.length > 3 && (
+            <p className="text-xs text-slate-500 text-center">+{alertas.length - 3} alertas más</p>
+          )}
+        </div>
+      )}
 
       {/* Búsqueda y filtros */}
       <div className="card-p mb-4">
@@ -132,7 +233,7 @@ export const InventarioPage = () => {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Buscar por código, nombre o descripción..."
+              placeholder="Buscar por código o nombre..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -178,19 +279,11 @@ export const InventarioPage = () => {
         )}
       </div>
 
-      {/* Alertas */}
-      {sinStock > 0 && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4 text-sm text-red-800">
-          <AlertCircle size={18} className="flex-shrink-0 text-red-500" />
-          <span><strong>{sinStock}</strong> producto{sinStock > 1 ? 's' : ''} sin stock en tienda</span>
-        </div>
-      )}
-
       {/* Tabla */}
       <div className="card-p overflow-hidden p-0">
         {loading ? (
           <div className="text-center py-12 text-slate-400 text-sm">Cargando...</div>
-        ) : productos.length === 0 ? (
+        ) : productosVisibles.length === 0 ? (
           <div className="text-center py-12 text-slate-400 text-sm">No hay productos</div>
         ) : (
           <div className="overflow-x-auto">
@@ -200,15 +293,16 @@ export const InventarioPage = () => {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Código</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Nombre</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Categoría</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600">Precio USD</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600">Tienda</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600">Almacén</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600">Precio</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600">Stock</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600">Estado</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {productos.map(producto => {
-                  const bajoDemanda = producto.stock_tienda < (producto.nivel_minimo_stock || 5);
+                {productosVisibles.map(producto => {
+                  const indicador = getIndicador(producto);
+                  const stock = activeTab === 'tienda' ? producto.stock_tienda : producto.stock_almacen;
                   return (
                     <tr key={producto.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 font-mono text-xs text-slate-500">{producto.codigo_barras}</td>
@@ -229,14 +323,15 @@ export const InventarioPage = () => {
                         ${producto.precio_usd.toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className={`font-bold ${bajoDemanda ? 'text-red-600' : 'text-slate-900'}`}>
-                          {producto.stock_tienda}
+                        <span className={`font-bold ${indicador.tipo === 'SIN_STOCK' ? 'text-red-600' : indicador.tipo === 'STOCK_BAJO' ? 'text-amber-600' : 'text-slate-900'}`}>
+                          {stock}
                         </span>
-                        {bajoDemanda && (
-                          <span className="ml-1 text-red-400 text-xs">⚠</span>
-                        )}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-600">{producto.stock_almacen}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-block px-2.5 py-1 rounded-lg border text-xs font-medium ${indicador.color}`}>
+                          {indicador.icon} {indicador.label}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           <Link
@@ -268,20 +363,18 @@ export const InventarioPage = () => {
         )}
       </div>
 
-      {/* Modal crear/editar */}
+      {/* Modal */}
       {showModal && (
         <ProductoModal
           producto={editingProducto}
           categorias={categorias}
           onClose={() => setShowModal(false)}
-          onSave={() => { setShowModal(false); cargarProductos(); }}
+          onSave={() => { setShowModal(false); cargarInventario(); }}
         />
       )}
     </AppLayout>
   );
 };
-
-// ── Modal de Crear/Editar ─────────────────────────────────────────────────────
 
 interface ProductoModalProps {
   producto: Producto | null;
@@ -302,6 +395,7 @@ const ProductoModal = ({ producto, categorias, onClose, onSave }: ProductoModalP
     stock_tienda: producto?.stock_tienda?.toString() || '0',
     stock_almacen: producto?.stock_almacen?.toString() || '0',
     nivel_minimo_stock: producto?.nivel_minimo_stock?.toString() || '5',
+    nivel_maximo_stock: producto?.nivel_maximo_stock?.toString() || '100',
     proveedor: producto?.proveedor || '',
   });
   const [saving, setSaving] = useState(false);
@@ -311,7 +405,6 @@ const ProductoModal = ({ producto, categorias, onClose, onSave }: ProductoModalP
     const { name, value } = e.target;
     setForm(prev => {
       const next = { ...prev, [name]: value };
-      // Auto-calc sol from usd
       if (name === 'precio_usd' && value) {
         next.precio_sol = (parseFloat(value) * 3.8).toFixed(2);
       }
@@ -332,6 +425,7 @@ const ProductoModal = ({ producto, categorias, onClose, onSave }: ProductoModalP
         stock_tienda: parseInt(form.stock_tienda),
         stock_almacen: parseInt(form.stock_almacen),
         nivel_minimo_stock: parseInt(form.nivel_minimo_stock),
+        nivel_maximo_stock: parseInt(form.nivel_maximo_stock),
       };
 
       if (producto) {
@@ -401,11 +495,6 @@ const ProductoModal = ({ producto, categorias, onClose, onSave }: ProductoModalP
                 className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600 mb-1 block">Proveedor</label>
-              <input name="proveedor" value={form.proveedor} onChange={handleChange}
-                className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" />
-            </div>
-            <div>
               <label className="text-xs font-medium text-slate-600 mb-1 block">Stock Tienda</label>
               <input name="stock_tienda" type="number" value={form.stock_tienda} onChange={handleChange}
                 className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" />
@@ -418,6 +507,11 @@ const ProductoModal = ({ producto, categorias, onClose, onSave }: ProductoModalP
             <div>
               <label className="text-xs font-medium text-slate-600 mb-1 block">Stock Mínimo</label>
               <input name="nivel_minimo_stock" type="number" value={form.nivel_minimo_stock} onChange={handleChange}
+                className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 mb-1 block">Stock Máximo</label>
+              <input name="nivel_maximo_stock" type="number" value={form.nivel_maximo_stock} onChange={handleChange}
                 className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </div>
             <div className="col-span-2">
